@@ -13,7 +13,7 @@
     "singleProjectMode": true
   },
   "functions": {
-    "source": "functions",
+    "source": "freshtrack-functions",
     "codebase": "default",
     "ignore": [
       "node_modules",
