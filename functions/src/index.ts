@@ -3,9 +3,11 @@ import * as admin from "firebase-admin";
 import express, { Request, Response } from "express";
 import cors from "cors";
 
+// Initialize Firebase Admin
 admin.initializeApp();
 const db = admin.firestore();
 
+// Setup Express
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
@@ -14,57 +16,31 @@ app.use(express.json());
 app.post("/addProduct", async (req: Request, res: Response) => {
   const { name, expirationDate, location, imageUrl, category, quantity, userId } = req.body;
 
+  // ตรวจสอบข้อมูลที่จำเป็น
   if (!name || !expirationDate || !location || !category || !userId) {
     return res.status(400).send({ success: false, message: "Missing required fields." });
   }
 
   try {
-    const product = {
+    // บันทึกข้อมูลลง Firestore
+    await db.collection("products").add({
       name,
-      expirationDate: admin.firestore.Timestamp.fromDate(new Date(expirationDate)),
+      expirationDate,
       location,
       imageUrl,
       category,
-      quantity: quantity || 1,
-      addedAt: admin.firestore.Timestamp.now(),
-      userId
-    };
+      quantity,
+      userId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
-    const docRef = await db.collection("Products").add(product);
-    res.status(200).send({ success: true, id: docRef.id });
+    // สำเร็จ
+    return res.status(200).send({ success: true, message: "Product added successfully." });
   } catch (error) {
     console.error("Error adding product:", error);
-    res.status(500).send({ success: false, message: error });
+    return res.status(500).send({ success: false, message: "Internal server error." });
   }
 });
 
-// ดึงสินค้าทั้งหมดของ user
-app.get("/getProducts/:userId", async (req: Request, res: Response) => {
-  const { userId } = req.params;
-  try {
-    const snapshot = await db.collection("Products")
-      .where("userId", "==", userId)
-      .orderBy("addedAt", "desc")
-      .get();
-
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    res.status(200).send(products);
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).send({ success: false, message: error });
-  }
-});
-
-// ลบสินค้า
-app.delete("/deleteProduct/:productId", async (req: Request, res: Response) => {
-  const { productId } = req.params;
-  try {
-    await db.collection("Products").doc(productId).delete();
-    res.status(200).send({ success: true });
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    res.status(500).send({ success: false, message: error });
-  }
-});
-
+// Export Express app เป็น Firebase Function
 export const api = functions.https.onRequest(app);
