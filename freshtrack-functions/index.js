@@ -6,6 +6,7 @@ const cors = require("cors");
 // Initialize Firebase Admin
 admin.initializeApp();
 const db = admin.firestore();
+const FieldValue = admin.firestore.FieldValue; // ✅ ดึง FieldValue ออกมาใช้
 
 // Setup Express
 const app = express();
@@ -27,6 +28,7 @@ app.get("/api/products", async (req, res) => {
 app.post("/api/products", async (req, res) => {
   try {
     const { name, expirationDate, location, imageUrl, category, quantity, userId } = req.body;
+
     if (!name || !expirationDate || !userId) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -39,7 +41,7 @@ app.post("/api/products", async (req, res) => {
       category: category || "",
       quantity: quantity || 1,
       userId,
-      addedAt: admin.firestore.Timestamp.now()
+      addedAt: FieldValue.serverTimestamp() // ✅ ใช้ FieldValue ที่ import มา
     };
 
     const docRef = await db.collection("Products").add(newProduct);
@@ -50,4 +52,5 @@ app.post("/api/products", async (req, res) => {
   }
 });
 
+// Export the Express app as a Firebase Cloud Function
 exports.app = functions.https.onRequest(app);
