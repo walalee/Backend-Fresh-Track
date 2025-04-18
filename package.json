@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
+    "@react-native-firebase/app": "^21.14.0",
+    "@react-native-firebase/database": "^21.14.0",
+    "@react-native-firebase/firestore": "^21.14.0",
     "expo": "~52.0.41",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
